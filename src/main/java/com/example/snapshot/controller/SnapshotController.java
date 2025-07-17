@@ -23,10 +23,12 @@ public class SnapshotController {
 
     @GetMapping("/api/snapshot")
     public Map<String, Object> getSnapshot() {
-
-        redis.opsForValue().increment("snapshot:counter");
-
         Map<String, Object> snapshot = new HashMap<>();
+        try {
+            redis.opsForValue().increment("snapshot:counter");
+        } catch (Exception e) {
+            snapshot.put("redisError", e.getMessage());
+        }
         try {
             InetAddress localHost = InetAddress.getLocalHost();
             snapshot.put("hostname", localHost.getHostName());
@@ -54,12 +56,15 @@ public class SnapshotController {
 
     @GetMapping("/api/stats")
     public Map<String, Object> getStats() {
-        String count = redis.opsForValue().get("snapshot:counter");
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalCalls", count != null ? Integer.parseInt(count) : 0);
-        return stats;
+        int total = 0;
+        try {
+            String count = redis.opsForValue().get("snapshot:counter");
+            total = (count != null) ? Integer.parseInt(count) : 0;
+        } catch (Exception e) {
+            return Map.of("error", e.getMessage());
+        }
+        return Map.of("totalCalls", total);
     }
-
 
     public String bytesToMB(long bytes) {
         return (bytes / 1024 /1024) + " MB";
