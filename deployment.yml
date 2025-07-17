@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snapshot-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: snapshot
+  template:
+    metadata:
+      labels:
+        app: snapshot
+    spec:
+      containers:
+        - name: snapshot-container
+          image: snapshot-service
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
