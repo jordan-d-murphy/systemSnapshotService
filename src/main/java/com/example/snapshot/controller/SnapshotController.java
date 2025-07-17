@@ -5,6 +5,9 @@ import lombok.Data;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.time.Instant;
@@ -14,8 +17,15 @@ import java.util.UUID;
 
 @RestController
 public class SnapshotController {
+
+    @Autowired
+    private StringRedisTemplate redis;
+
     @GetMapping("/api/snapshot")
     public Map<String, Object> getSnapshot() {
+
+        redis.opsForValue().increment("snapshot:counter");
+
         Map<String, Object> snapshot = new HashMap<>();
         try {
             InetAddress localHost = InetAddress.getLocalHost();
@@ -41,6 +51,15 @@ public class SnapshotController {
 
         return snapshot;
     }
+
+    @GetMapping("/api/stats")
+    public Map<String, Object> getStats() {
+        String count = redis.opsForValue().get("snapshot:counter");
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalCalls", count != null ? Integer.parseInt(count) : 0);
+        return stats;
+    }
+
 
     public String bytesToMB(long bytes) {
         return (bytes / 1024 /1024) + " MB";
